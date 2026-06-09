@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF8F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <EditText
+            android:id="@+id/etNoteTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Titre de la note"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:background="@android:color/transparent"
+            android:importantForAutofill="no"
+            android:inputType="textCapSentences"
+            android:paddingVertical="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sélectionner une couleur :"
+            android:textColor="#828282"
+            android:textSize="14sp"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/paletteContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <View android:id="@+id/colorWhite" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#FFFFFF" android:elevation="2dp" />
+            <View android:id="@+id/colorGrey" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#828282" android:elevation="2dp" />
+            <View android:id="@+id/colorGreen" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#219653" android:elevation="2dp" />
+            <View android:id="@+id/colorRed" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#EB5757" android:elevation="2dp" />
+            <View android:id="@+id/colorBlue" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#2F80ED" android:elevation="2dp" />
+            <View android:id="@+id/colorYellow" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#F2C94C" android:elevation="2dp" />
+            <View android:id="@+id/colorOrange" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#F2994A" android:elevation="2dp" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/etNoteContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Saisissez votre note ici..."
+            android:textSize="14sp"
+            android:textColor="#000000"
+            android:background="@android:color/transparent"
+            android:gravity="top"
+            android:minLines="12"
+            android:importantForAutofill="no"
+            android:inputType="textMultiLine|textLongMessage"
+            android:paddingVertical="10dp" />
+
+        <Button
+            android:id="@+id/btnSaveNote"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#219653"
+            android:text="Enregistrer la Note"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</ScrollView>
