@@ -45,7 +45,6 @@ public class AddEditActivity extends AppCompatActivity {
         String title = etNoteTitle.getText().toString().trim();
         String content = etNoteContent.getText().toString().trim();
 
-        // Règle d'or : Validation stricte des données textuelles saisies
         if (title.isEmpty()) {
             etNoteTitle.setError("Le titre de la note ne peut pas être vide");
             etNoteTitle.requestFocus();
@@ -57,8 +56,21 @@ public class AddEditActivity extends AppCompatActivity {
             return;
         }
 
-        // Logique d'insertion locale qui sera implémentée avec Room au cours du Lab 3
-        Toast.makeText(this, "Validation réussie. Prêt à enregistrer !", Toast.LENGTH_SHORT).show();
-        finish(); // Clôture l'écran et retourne à l'activité parente
+        // Création de la date du jour
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault());
+        String currentDate = sdf.format(new java.util.Date());
+
+        Note targetNote = new Note(title, content, selectedColor, currentDate, false);
+
+        // Exécution en arrière-plan via l'Executor pour ne pas bloquer l'interface
+        NoteDatabase.databaseWriteExecutor.execute(() -> {
+            NoteDatabase.getInstance(AddEditActivity.this).noteDao().insertNote(targetNote);
+
+            // Retour sur le thread principal pour afficher le Toast et fermer l'activité
+            runOnUiThread(() -> {
+                android.widget.Toast.makeText(AddEditActivity.this, "Note enregistrée avec succès !", android.widget.Toast.LENGTH_SHORT).show();
+                finish();
+            });
+        });
     }
 }
