@@ -34,25 +34,39 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     public void onBindViewHolder(@NonNull NoteViewHolder holder, int position) {
         Note currentNote = notesList.get(position);
 
-        // 1. Remplissage des textes
+        // 1. Remplissage des textes et de la couleur
         holder.tvTitle.setText(currentNote.getTitre());
-        holder.tvContent.setText(currentNote.getContenu());
         holder.tvDate.setText(currentNote.getDate());
 
-        // 2. Application de la couleur officielle
         try {
             holder.cardBackground.setBackgroundColor(Color.parseColor(currentNote.getCouleur()));
         } catch (Exception e) {
-            holder.cardBackground.setBackgroundColor(Color.parseColor("#828282")); // Gris par défaut en cas d'erreur
+            holder.cardBackground.setBackgroundColor(Color.parseColor("#828282"));
         }
 
-        // 3. Gestion de l'icône Favori (L'étoile jaune)
-        // Elle ne s'affiche que si l'attribut isFavori de la note est à true
+        // 2. Gestion de l'icône Favori
         if (currentNote.isFavori()) {
             holder.ivFavoriteStar.setVisibility(View.VISIBLE);
         } else {
             holder.ivFavoriteStar.setVisibility(View.GONE);
         }
+
+        // --- NOUVEAU : Clic simple pour ouvrir le mode modification (Écran 6) ---
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(v.getContext(), AddEditActivity.class);
+                // On passe toutes les informations de la note actuelle
+                intent.putExtra("EXTRA_ID", currentNote.getId());
+                intent.putExtra("EXTRA_TITLE", currentNote.getTitre());
+                intent.putExtra("EXTRA_CONTENT", currentNote.getContenu());
+                intent.putExtra("EXTRA_COLOR", currentNote.getCouleur());
+                intent.putExtra("EXTRA_IS_FAVORI", currentNote.isFavori());
+
+                v.getContext().startActivity(intent);
+            }
+        });
+        // ------------------------------------------------------------------------
     }
 
     @Override
@@ -62,17 +76,16 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
 
     // Classe interne pour lier les vues de item_note.xml
     class NoteViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvContent, tvDate;
+        TextView tvTitle, tvDate;
         ImageView ivFavoriteStar;
         ConstraintLayout cardBackground;
 
         public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvTitle = itemView.findViewById(R.id.tvNoteTitle);
-            tvContent = itemView.findViewById(R.id.tvNoteContent);
-            tvDate = itemView.findViewById(R.id.tvNoteDate);
+            tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvDate = itemView.findViewById(R.id.tvDate);
             ivFavoriteStar = itemView.findViewById(R.id.ivFavoriteStar);
-            cardBackground = itemView.findViewById(R.id.layoutCardBackground);
+            cardBackground = itemView.findViewById(R.id.cardBackground);
         }
     }
 }

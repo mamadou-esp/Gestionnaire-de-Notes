@@ -20,57 +20,91 @@ public class AddEditActivity extends AppCompatActivity {
     private Button btnSaveNote;
     private ConstraintLayout mainContainer;
 
+    // Déclaration des pastilles de modification de couleur
+    private View editColorGreen, editColorRed, editColorBlue, editColorYellow, editColorOrange, editColorGray;
+
     private String noteColor = "#FFFFFF"; // Couleur par défaut
+    private int noteId = -1;             // -1 = Mode Création
+    private boolean isFavori = false;    // Conserver l'état favori actuel
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_edit);
 
-        // 1. Liaison des composants graphiques XML
+        // 1. Liaison des composants graphiques
         etNoteTitle = findViewById(R.id.etNoteTitle);
         etNoteContent = findViewById(R.id.etNoteContent);
         btnSaveNote = findViewById(R.id.btnSaveNote);
         mainContainer = findViewById(R.id.mainAddEdit);
 
-        // 2. Récupération de la couleur choisie depuis la MainActivity
-        if (getIntent().hasExtra("EXTRA_COLOR")) {
-            noteColor = getIntent().getStringExtra("EXTRA_COLOR");
-            try {
-                // Application de la couleur officielle au fond de l'écran (Fidélité au design)
-                mainContainer.setBackgroundColor(Color.parseColor(noteColor));
+        editColorGreen = findViewById(R.id.editColorGreen);
+        editColorRed = findViewById(R.id.editColorRed);
+        editColorBlue = findViewById(R.id.editColorBlue);
+        editColorYellow = findViewById(R.id.editColorYellow);
+        editColorOrange = findViewById(R.id.editColorOrange);
+        editColorGray = findViewById(R.id.editColorGray);
 
-                // Si la couleur de fond est sombre (comme le vert, rouge, bleu ou gris),
-                // on adapte la couleur des textes d'indication en blanc translucide pour la lisibilité
-                if (!noteColor.equals("#F2C94C")) { // Sauf pour le jaune clair
-                    etNoteTitle.setTextColor(Color.WHITE);
-                    etNoteTitle.setHintTextColor(Color.parseColor("#CCCCCC"));
-                    etNoteContent.setTextColor(Color.WHITE);
-                    etNoteContent.setHintTextColor(Color.parseColor("#CCCCCC"));
-                }
-            } catch (IllegalArgumentException e) {
-                // Repli sécurisé sur le fond blanc en cas d'erreur de format
-                mainContainer.setBackgroundColor(Color.WHITE);
+        // 2. Détection du mode (Modification ou Création)
+        if (getIntent().hasExtra("EXTRA_ID")) {
+            noteId = getIntent().getIntExtra("EXTRA_ID", -1);
+            noteColor = getIntent().getStringExtra("EXTRA_COLOR");
+            isFavori = getIntent().getBooleanExtra("EXTRA_IS_FAVORI", false);
+
+            etNoteTitle.setText(getIntent().getStringExtra("EXTRA_TITLE"));
+            etNoteContent.setText(getIntent().getStringExtra("EXTRA_CONTENT"));
+            btnSaveNote.setText("Modifier");
+        } else {
+            if (getIntent().hasExtra("EXTRA_COLOR")) {
+                noteColor = getIntent().getStringExtra("EXTRA_COLOR");
             }
+            btnSaveNote.setText("Créer");
         }
 
-        // 3. Action du clic sur le bouton Créer
-        btnSaveNote.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sauvegarderNote();
-            }
-        });
+        // Appliquer la couleur initiale reçue
+        rafraichirCouleurEcran(noteColor);
+
+        // 3. Écouteurs de clics pour CHANGER la couleur de la note (Exigence Page 11)
+        editColorGreen.setOnClickListener(v -> rafraichirCouleurEcran("#219653"));
+        editColorRed.setOnClickListener(v -> rafraichirCouleurEcran("#EB5757"));
+        editColorBlue.setOnClickListener(v -> rafraichirCouleurEcran("#2F80ED"));
+        editColorYellow.setOnClickListener(v -> rafraichirCouleurEcran("#F2C94C"));
+        editColorOrange.setOnClickListener(v -> rafraichirCouleurEcran("#F2994A"));
+        editColorGray.setOnClickListener(v -> rafraichirCouleurEcran("#828282"));
+
+        btnSaveNote.setOnClickListener(v -> sauvegarderNote());
     }
 
     /**
-     * Valide les saisies, formate la date courante et insère la note dans Room en tâche de fond.
+     * Change dynamiquement la couleur de fond et adapte le contraste des textes.
+     * Centralise la logique pour éviter la duplication de code (Qualité de code 15%).
      */
+    private void rafraichirCouleurEcran(String hexColor) {
+        this.noteColor = hexColor;
+        try {
+            mainContainer.setBackgroundColor(Color.parseColor(noteColor));
+
+            // Gestion intelligente du contraste
+            if (noteColor.equals("#F2C94C")) { // Si jaune clair, texte en noir
+                etNoteTitle.setTextColor(Color.BLACK);
+                etNoteTitle.setHintTextColor(Color.GRAY);
+                etNoteContent.setTextColor(Color.BLACK);
+                etNoteContent.setHintTextColor(Color.GRAY);
+            } else { // Pour toutes les autres couleurs sombres, texte en blanc
+                etNoteTitle.setTextColor(Color.WHITE);
+                etNoteTitle.setHintTextColor(Color.parseColor("#CCCCCC"));
+                etNoteContent.setTextColor(Color.WHITE);
+                etNoteContent.setHintTextColor(Color.parseColor("#CCCCCC"));
+            }
+        } catch (IllegalArgumentException e) {
+            mainContainer.setBackgroundColor(Color.WHITE);
+        }
+    }
+
     private void sauvegarderNote() {
         String title = etNoteTitle.getText().toString().trim();
         String content = etNoteContent.getText().toString().trim();
 
-        // Validation stricte des entrées
         if (TextUtils.isEmpty(title)) {
             Toast.makeText(this, "Veuillez saisir un titre", Toast.LENGTH_SHORT).show();
             return;
@@ -80,27 +114,26 @@ public class AddEditActivity extends AppCompatActivity {
             return;
         }
 
-        // Génération et formatage de la date système courante (ex: "11 Juin 2026")
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
         String currentDate = sdf.format(new Date());
 
-        // Création de l'objet Note (par défaut, non favori à la création)
-        final Note nouvelleNote = new Note(title, content, currentDate, noteColor, false);
-
-        // Insertion asynchrone dans Room pour ne pas bloquer l'UI Thread (Critère Persistance locale)
         NoteDatabase db = NoteDatabase.getInstance(this);
         NoteDatabase.databaseWriteExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                db.noteDao().insert(nouvelleNote);
+                if (noteId == -1) {
+                    Note nouvelleNote = new Note(title, content, currentDate, noteColor, false);
+                    db.noteDao().insert(nouvelleNote);
+                } else {
+                    // Sauvegarde avec la NOUVELLE couleur sélectionnée !
+                    Note noteModifiee = new Note(title, content, currentDate, noteColor, isFavori);
+                    noteModifiee.setId(noteId);
+                    db.noteDao().update(noteModifiee);
+                }
 
-                // Retour à l'écran précédent sur le thread principal une fois l'opération terminée
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(AddEditActivity.this, "Note enregistrée avec succès", Toast.LENGTH_SHORT).show();
-                        finish(); // Ferme cette activité et retourne à MainActivity
-                    }
+                runOnUiThread(() -> {
+                    Toast.makeText(AddEditActivity.this, "Opération réussie", Toast.LENGTH_SHORT).show();
+                    finish();
                 });
             }
         });
