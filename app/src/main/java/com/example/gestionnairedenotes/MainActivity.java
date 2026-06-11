@@ -2,11 +2,15 @@ package com.example.gestionnairedenotes;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -14,52 +18,55 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private EditText etSearch;
-    private TextView btnFavoris;
-    private TextView tvEmptyNotes;
-    private RecyclerView recyclerViewNotes;
+    private NoteViewModel noteViewModel;
+    private NoteAdapter adapter;
 
     private CardView cardPaletteContainer;
-    private FloatingActionButton fabAdd;
-    private FloatingActionButton fabClosePalette;
+    private FloatingActionButton fabAddNote;
 
-    private View viewColorGreen, viewColorRed, viewColorBlue, viewColorYellow, viewColorOrange, viewColorGray;
-
-    // Ajout de l'adaptateur pour la liste
-    private NoteAdapter noteAdapter;
+    private boolean isFilteringFavorites = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        etSearch = findViewById(R.id.etSearch);
-        btnFavoris = findViewById(R.id.btnFavoris);
-        tvEmptyNotes = findViewById(R.id.tvEmptyNotes);
-        recyclerViewNotes = findViewById(R.id.recyclerViewNotes);
+        // 1. Initialisation du RecyclerView
+        RecyclerView recyclerView = findViewById(R.id.recyclerViewNotes);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setHasFixedSize(true);
 
+        // 2. Configuration de l'adaptateur
+        adapter = new NoteAdapter();
+        recyclerView.setAdapter(adapter);
+
+        // 3. Liaison avec le ViewModel (Observation LiveData de Room)
+        TextView tvEmptyNotes = findViewById(R.id.tvEmptyNotes);
+        noteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
+        noteViewModel.getAllNotes().observe(this, new Observer<List<Note>>() {
+            @Override
+            public void onChanged(List<Note> notes) {
+                if (notes != null && !notes.isEmpty()) {
+                    adapter.setNotes(notes);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    tvEmptyNotes.setVisibility(View.GONE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    tvEmptyNotes.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        // 4. Gestion de la Palette de couleurs
         cardPaletteContainer = findViewById(R.id.cardPaletteContainer);
-        fabAdd = findViewById(R.id.fabAdd);
-        fabClosePalette = findViewById(R.id.fabClosePalette);
+        fabAddNote = findViewById(R.id.fabAdd);
+        FloatingActionButton fabClosePalette = findViewById(R.id.fabClosePalette);
 
-        viewColorGreen = findViewById(R.id.viewColorGreen);
-        viewColorRed = findViewById(R.id.viewColorRed);
-        viewColorBlue = findViewById(R.id.viewColorBlue);
-        viewColorYellow = findViewById(R.id.viewColorYellow);
-        viewColorOrange = findViewById(R.id.viewColorOrange);
-        viewColorGray = findViewById(R.id.viewColorGray);
-
-        // --- NOUVEAU : Configuration du RecyclerView et de son Adaptateur ---
-        recyclerViewNotes.setLayoutManager(new LinearLayoutManager(this));
-        noteAdapter = new NoteAdapter();
-        recyclerViewNotes.setAdapter(noteAdapter);
-        // -------------------------------------------------------------------
-
-        fabAdd.setOnClickListener(new View.OnClickListener() {
+        fabAddNote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                fabAdd.setVisibility(View.GONE);
                 cardPaletteContainer.setVisibility(View.VISIBLE);
+                fabAddNote.setVisibility(View.GONE);
             }
         });
 
@@ -67,59 +74,70 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 cardPaletteContainer.setVisibility(View.GONE);
-                fabAdd.setVisibility(View.VISIBLE);
+                fabAddNote.setVisibility(View.VISIBLE);
             }
         });
 
-        viewColorGreen.setOnClickListener(v -> ouvrirEcranCreation("#219653"));
-        viewColorRed.setOnClickListener(v -> ouvrirEcranCreation("#EB5757"));
-        viewColorBlue.setOnClickListener(v -> ouvrirEcranCreation("#2F80ED"));
-        viewColorYellow.setOnClickListener(v -> ouvrirEcranCreation("#F2C94C"));
-        viewColorOrange.setOnClickListener(v -> ouvrirEcranCreation("#F2994A"));
-        viewColorGray.setOnClickListener(v -> ouvrirEcranCreation("#828282"));
-    }
+        // Couplage des cercles de couleur de ton XML
+        setupColorClick(R.id.viewColorGreen, "#4CAF50");
+        setupColorClick(R.id.viewColorRed, "#F44336");
+        setupColorClick(R.id.viewColorBlue, "#2196F3");
+        setupColorClick(R.id.viewColorYellow, "#FFEB3B");
+        setupColorClick(R.id.viewColorOrange, "#FF9800");
+        setupColorClick(R.id.viewColorGray, "#9E9E9E");
 
-    private void ouvrirEcranCreation(String hexColor) {
-        cardPaletteContainer.setVisibility(View.GONE);
-        fabAdd.setVisibility(View.VISIBLE);
-
-        Intent intent = new Intent(MainActivity.this, AddEditActivity.class);
-        intent.putExtra("EXTRA_COLOR", hexColor);
-        startActivity(intent);
-    }
-
-    // --- NOUVEAU : Chargement automatique des notes à chaque retour sur l'écran ---
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadNotes();
-    }
-
-    private void loadNotes() {
-        // Exécution de la requête en arrière-plan
-        NoteDatabase.databaseWriteExecutor.execute(new Runnable() {
+        // 5. Barre de recherche dynamique (Filtre textuel en temps réel)
+        EditText etSearch = findViewById(R.id.etSearch);
+        etSearch.addTextChangedListener(new TextWatcher() {
             @Override
-            public void run() {
-                // Récupération de la liste depuis la BDD
-                final List<Note> notes = NoteDatabase.getInstance(MainActivity.this).noteDao().getAllNotes();
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
-                // Mise à jour de l'interface graphique sur le thread principal
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (notes.isEmpty()) {
-                            // Bascule sur l'Écran 1 (Liste Vide)
-                            tvEmptyNotes.setVisibility(View.VISIBLE);
-                            recyclerViewNotes.setVisibility(View.GONE);
-                        } else {
-                            // Bascule sur l'Écran 3 (Liste remplie)
-                            tvEmptyNotes.setVisibility(View.GONE);
-                            recyclerViewNotes.setVisibility(View.VISIBLE);
-                            noteAdapter.setNotes(notes);
-                        }
-                    }
-                });
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (adapter != null) {
+                    adapter.filter(s.toString());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // 6. Gestion du Bouton de filtrage Favoris
+        TextView btnFavoris = findViewById(R.id.btnFavoris);
+        btnFavoris.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (adapter == null) return;
+
+                // Inversion de la bascule
+                isFilteringFavorites = !isFilteringFavorites;
+
+                if (isFilteringFavorites) {
+                    adapter.filterFavorites(true);
+                    btnFavoris.setText("★ Favoris");
+                } else {
+                    adapter.filterFavorites(false);
+                    btnFavoris.setText("Favoris");
+                }
             }
         });
+    }
+
+    private void setupColorClick(int viewId, final String hexColor) {
+        View colorView = findViewById(viewId);
+        if (colorView != null) {
+            colorView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    cardPaletteContainer.setVisibility(View.GONE);
+                    fabAddNote.setVisibility(View.VISIBLE);
+
+                    Intent intent = new Intent(MainActivity.this, AddEditActivity.class);
+                    intent.putExtra("EXTRA_COLOR", hexColor);
+                    startActivity(intent);
+                }
+            });
+        }
     }
 }

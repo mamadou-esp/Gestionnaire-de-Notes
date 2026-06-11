@@ -1,5 +1,6 @@
 package com.example.gestionnairedenotes;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -19,7 +20,7 @@ public interface NoteDao {
 
     // Récupérer toutes les notes (les plus récentes en premier)
     @Query("SELECT * FROM table_notes ORDER BY id DESC")
-    List<Note> getAllNotes();
+    LiveData<List<Note>> getAllNotes();
 
     // Récupérer uniquement les notes favorites (Filtre Favoris)
     @Query("SELECT * FROM table_notes WHERE isFavori = 1 ORDER BY id DESC")
