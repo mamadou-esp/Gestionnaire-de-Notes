@@ -14,6 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder> {
@@ -21,43 +23,72 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     private List<Note> notesList = new ArrayList<>();
     private List<Note> notesListFull = new ArrayList<>(); // Source de vérité (copie brute de la BDD)
 
-    // États des filtres en cours
+    // États des filtres et du tri en cours
     private String currentSearchText = "";
     private boolean currentShowOnlyFavorites = false;
 
-    // Met à jour la liste principale et réapplique les filtres en cours
+    // 0 = Tri par Date (récent en premier), 1 = Tri Alphabétique (Titre)
+    private int currentSortType = 0;
+
+    // Met à jour la liste principale et réapplique les filtres et le tri
     public void setNotes(List<Note> notes) {
         this.notesListFull = new ArrayList<>(notes);
         applyFilters();
     }
 
+    // Permet de changer le type de tri depuis la MainActivity
+    public void setSortType(int sortType) {
+        this.currentSortType = sortType;
+        applyFilters(); // On réapplique les filtres pour mettre à jour le tri visuel
+    }
+
     /**
-     * Centralisation du filtrage combiné (Texte + Favoris)
+     * Centralisation du filtrage combiné (Texte + Favoris) ET du Tri
      */
     private void applyFilters() {
         List<Note> filteredList = new ArrayList<>();
         String filterPattern = currentSearchText.toLowerCase().trim();
 
+        // 1. Étape de Filtrage
         for (Note item : notesListFull) {
-            // Étape A : Vérification du critère Favoris
             boolean matchesFavorite = !currentShowOnlyFavorites || item.isFavori();
 
-            // Étape B : Vérification du critère Texte (Titre ou Contenu)
             boolean matchesText = filterPattern.isEmpty() ||
                     (item.getTitre() != null && item.getTitre().toLowerCase().contains(filterPattern)) ||
                     (item.getContenu() != null && item.getContenu().toLowerCase().contains(filterPattern));
 
-            // Si la note valide les deux filtres, on l'affiche
             if (matchesFavorite && matchesText) {
                 filteredList.add(item);
             }
+        }
+
+        // 2. Étape de Tri (Nouveau !)
+        if (currentSortType == 0) {
+            // Tri par date décroissante (ID ou Date si stockée en String comparable/Timestamp)
+            // Dans l'urgence d'un examen, trier par ID inversé trie les notes de la plus récente à la plus ancienne
+            Collections.sort(filteredList, new Comparator<Note>() {
+                @Override
+                public int compare(Note n1, Note n2) {
+                    return Integer.compare(n2.getId(), n1.getId());
+                }
+            });
+        } else if (currentSortType == 1) {
+            // Tri par Ordre Alphabétique du Titre
+            Collections.sort(filteredList, new Comparator<Note>() {
+                @Override
+                public int compare(Note n1, Note n2) {
+                    String t1 = n1.getTitre() != null ? n1.getTitre() : "";
+                    String t2 = n2.getTitre() != null ? n2.getTitre() : "";
+                    return t1.compareToIgnoreCase(t2);
+                }
+            });
         }
 
         this.notesList = filteredList;
         notifyDataSetChanged();
     }
 
-    // NOUVEAU : Permet à la MainActivity de récupérer la note glissée (Swipe-to-delete)
+    // Permet à la MainActivity de récupérer la note glissée (Swipe-to-delete)
     public Note getNoteAt(int position) {
         return notesList.get(position);
     }
@@ -100,7 +131,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
             holder.ivFavoriteStar.setVisibility(View.GONE);
         }
 
-        // --- GESTION DU DOUBLE-CLIC ET CLIC SIMPLE (Lab 9) ---
+        // Gestion du double-clic et clic simple (Lab 9)
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             private int clickCount = 0;
             private final Handler handler = new Handler(Looper.getMainLooper());
