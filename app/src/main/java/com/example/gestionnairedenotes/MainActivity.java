@@ -10,10 +10,10 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Déclaration des composants graphiques
     private EditText etSearch;
     private TextView btnFavoris;
     private TextView tvEmptyNotes;
@@ -25,12 +25,14 @@ public class MainActivity extends AppCompatActivity {
 
     private View viewColorGreen, viewColorRed, viewColorBlue, viewColorYellow, viewColorOrange, viewColorGray;
 
+    // Ajout de l'adaptateur pour la liste
+    private NoteAdapter noteAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Initialisation des composants graphiques (Liaison XML)
         etSearch = findViewById(R.id.etSearch);
         btnFavoris = findViewById(R.id.btnFavoris);
         tvEmptyNotes = findViewById(R.id.tvEmptyNotes);
@@ -47,10 +49,12 @@ public class MainActivity extends AppCompatActivity {
         viewColorOrange = findViewById(R.id.viewColorOrange);
         viewColorGray = findViewById(R.id.viewColorGray);
 
-        // Configuration temporaire du RecyclerView (LayoutManager linéaire vertical)
+        // --- NOUVEAU : Configuration du RecyclerView et de son Adaptateur ---
         recyclerViewNotes.setLayoutManager(new LinearLayoutManager(this));
+        noteAdapter = new NoteAdapter();
+        recyclerViewNotes.setAdapter(noteAdapter);
+        // -------------------------------------------------------------------
 
-        // 2. Gestion de l'ouverture de la palette de couleurs (Écran 1 -> Écran 2)
         fabAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -59,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 3. Gestion de la fermeture de la palette (Écran 2 -> Écran 1)
         fabClosePalette.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,50 +71,55 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 4. Écouteurs de clics sur chaque pastille pour ouvrir l'écran de création avec la couleur officielle
-        viewColorGreen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { ouvrirEcranCreation("#219653"); }
-        });
-
-        viewColorRed.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { ouvrirEcranCreation("#EB5757"); }
-        });
-
-        viewColorBlue.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { ouvrirEcranCreation("#2F80ED"); }
-        });
-
-        viewColorYellow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { ouvrirEcranCreation("#F2C94C"); }
-        });
-
-        viewColorOrange.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { ouvrirEcranCreation("#F2994A"); }
-        });
-
-        viewColorGray.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { ouvrirEcranCreation("#828282"); }
-        });
+        viewColorGreen.setOnClickListener(v -> ouvrirEcranCreation("#219653"));
+        viewColorRed.setOnClickListener(v -> ouvrirEcranCreation("#EB5757"));
+        viewColorBlue.setOnClickListener(v -> ouvrirEcranCreation("#2F80ED"));
+        viewColorYellow.setOnClickListener(v -> ouvrirEcranCreation("#F2C94C"));
+        viewColorOrange.setOnClickListener(v -> ouvrirEcranCreation("#F2994A"));
+        viewColorGray.setOnClickListener(v -> ouvrirEcranCreation("#828282"));
     }
 
-    /**
-     * Méthode centralisée pour lancer AddEditActivity en passant la couleur sélectionnée.
-     * Respecte les principes de réutilisation de code demandés dans le barème.
-     */
     private void ouvrirEcranCreation(String hexColor) {
-        // Refermer la palette pour que l'état visuel soit propre au retour
         cardPaletteContainer.setVisibility(View.GONE);
         fabAdd.setVisibility(View.VISIBLE);
 
-        // Navigation vers l'activité de création
         Intent intent = new Intent(MainActivity.this, AddEditActivity.class);
         intent.putExtra("EXTRA_COLOR", hexColor);
         startActivity(intent);
+    }
+
+    // --- NOUVEAU : Chargement automatique des notes à chaque retour sur l'écran ---
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadNotes();
+    }
+
+    private void loadNotes() {
+        // Exécution de la requête en arrière-plan
+        NoteDatabase.databaseWriteExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                // Récupération de la liste depuis la BDD
+                final List<Note> notes = NoteDatabase.getInstance(MainActivity.this).noteDao().getAllNotes();
+
+                // Mise à jour de l'interface graphique sur le thread principal
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (notes.isEmpty()) {
+                            // Bascule sur l'Écran 1 (Liste Vide)
+                            tvEmptyNotes.setVisibility(View.VISIBLE);
+                            recyclerViewNotes.setVisibility(View.GONE);
+                        } else {
+                            // Bascule sur l'Écran 3 (Liste remplie)
+                            tvEmptyNotes.setVisibility(View.GONE);
+                            recyclerViewNotes.setVisibility(View.VISIBLE);
+                            noteAdapter.setNotes(notes);
+                        }
+                    }
+                });
+            }
+        });
     }
 }
