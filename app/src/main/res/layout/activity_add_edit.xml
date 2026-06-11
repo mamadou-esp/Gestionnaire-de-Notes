@@ -1,80 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
+    android:id="@+id/mainAddEdit"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF8F5">
+    android:background="#FFFFFF"
+    android:padding="16dp"
+    tools:context=".AddEditActivity">
+
+    <EditText
+        android:id="@+id/etNoteTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:hint="Titre de la note"
+        android:inputType="textCapSentences"
+        android:textColor="#000000"
+        android:textColorHint="#828282"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/etNoteContent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@null"
+        android:gravity="top|start"
+        android:hint="Contenu de la note..."
+        android:inputType="textMultiLine"
+        android:textColor="#000000"
+        android:textColorHint="#828282"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/llColorPalette"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etNoteTitle" />
 
     <LinearLayout
+        android:id="@+id/llColorPalette"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnSaveNote"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <EditText
-            android:id="@+id/etNoteTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Titre de la note"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:background="@android:color/transparent"
-            android:importantForAutofill="no"
-            android:inputType="textCapSentences"
-            android:paddingVertical="10dp" />
+        <View
+            android:id="@+id/colorWhite"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#FFFFFF"
+            android:elevation="2dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sélectionner une couleur :"
-            android:textColor="#828282"
-            android:textSize="14sp"
-            android:layout_marginTop="15dp"
-            android:layout_marginBottom="8dp" />
+        <View
+            android:id="@+id/colorRed"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#FF5252" />
 
-        <LinearLayout
-            android:id="@+id/paletteContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="20dp">
+        <View
+            android:id="@+id/colorBlue"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#448AFF" />
 
-            <View android:id="@+id/colorWhite" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#FFFFFF" android:elevation="2dp" />
-            <View android:id="@+id/colorGrey" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#828282" android:elevation="2dp" />
-            <View android:id="@+id/colorGreen" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#219653" android:elevation="2dp" />
-            <View android:id="@+id/colorRed" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#EB5757" android:elevation="2dp" />
-            <View android:id="@+id/colorBlue" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#2F80ED" android:elevation="2dp" />
-            <View android:id="@+id/colorYellow" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#F2C94C" android:elevation="2dp" />
-            <View android:id="@+id/colorOrange" android:layout_width="36dp" android:layout_height="36dp" android:layout_margin="4dp" android:background="#F2994A" android:elevation="2dp" />
-        </LinearLayout>
+        <View
+            android:id="@+id/colorYellow"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#FFEB3B" />
 
-        <EditText
-            android:id="@+id/etNoteContent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Saisissez votre note ici..."
-            android:textSize="14sp"
-            android:textColor="#000000"
-            android:background="@android:color/transparent"
-            android:gravity="top"
-            android:minLines="12"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine|textLongMessage"
-            android:paddingVertical="10dp" />
+        <View
+            android:id="@+id/colorGreen"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#4CAF50" />
 
-        <Button
-            android:id="@+id/btnSaveNote"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="#219653"
-            android:text="Enregistrer la Note"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+        <View
+            android:id="@+id/colorGrey"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#828282" />
+
+        <View
+            android:id="@+id/colorOrange"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_circle_black"
+            android:backgroundTint="#F2994A" />
 
     </LinearLayout>
-</ScrollView>
+
+    <Button
+        android:id="@+id/btnSaveNote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Créer"
+        android:textAllCaps="false"
+        android:backgroundTint="#2F80ED"
+        android:textColor="#FFFFFF"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:layout_marginBottom="16dp"
+        app:cornerRadius="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

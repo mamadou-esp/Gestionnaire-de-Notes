@@ -6,11 +6,20 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class AddEditActivity extends AppCompatActivity {
-    private EditText etNoteTitle, etNoteContent;
+
+    private EditText etNoteTitle;
+    private EditText etNoteContent;
     private Button btnSaveNote;
-    private String selectedColor = "#FFFFFF"; // Couleur par défaut de la note
+
+    private View viewColorWhite, viewColorRed, viewColorBlue, viewColorYellow, viewColorGreen, viewColorGrey, viewColorOrange;
+
+    // Blanc par défaut, mais sera écrasé par la couleur reçue de l'écran précédent
+    private String selectedColor = "#FFFFFF";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,24 +30,46 @@ public class AddEditActivity extends AppCompatActivity {
         etNoteContent = findViewById(R.id.etNoteContent);
         btnSaveNote = findViewById(R.id.btnSaveNote);
 
-        setupPaletteListeners();
+        viewColorWhite = findViewById(R.id.colorWhite);
+        viewColorRed = findViewById(R.id.colorRed);
+        viewColorBlue = findViewById(R.id.colorBlue);
+        viewColorYellow = findViewById(R.id.colorYellow);
+        viewColorGreen = findViewById(R.id.colorGreen);
+        viewColorGrey = findViewById(R.id.colorGrey);
+        viewColorOrange = findViewById(R.id.colorOrange);
 
-        btnSaveNote.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                validateAndSave();
-            }
-        });
+        // --- Récupération de la couleur envoyée depuis le menu déroulant ---
+        String incomingColor = getIntent().getStringExtra("SELECTED_COLOR_FROM_MAIN");
+        if (incomingColor != null) {
+            selectedColor = incomingColor;
+        }
+
+        setupColorListeners();
+        btnSaveNote.setOnClickListener(v -> validateAndSave());
     }
 
-    private void setupPaletteListeners() {
-        findViewById(R.id.colorWhite).setOnClickListener(v -> selectedColor = "#FFFFFF");
-        findViewById(R.id.colorGrey).setOnClickListener(v -> selectedColor = "#828282");
-        findViewById(R.id.colorGreen).setOnClickListener(v -> selectedColor = "#219653");
-        findViewById(R.id.colorRed).setOnClickListener(v -> selectedColor = "#EB5757");
-        findViewById(R.id.colorBlue).setOnClickListener(v -> selectedColor = "#2F80ED");
-        findViewById(R.id.colorYellow).setOnClickListener(v -> selectedColor = "#F2C94C");
-        findViewById(R.id.colorOrange).setOnClickListener(v -> selectedColor = "#F2994A");
+    private void setupColorListeners() {
+        if (viewColorWhite != null) {
+            viewColorWhite.setOnClickListener(v -> selectedColor = "#FFFFFF");
+        }
+        if (viewColorRed != null) {
+            viewColorRed.setOnClickListener(v -> selectedColor = "#FF5252");
+        }
+        if (viewColorBlue != null) {
+            viewColorBlue.setOnClickListener(v -> selectedColor = "#448AFF");
+        }
+        if (viewColorYellow != null) {
+            viewColorYellow.setOnClickListener(v -> selectedColor = "#FFEB3B");
+        }
+        if (viewColorGreen != null) {
+            viewColorGreen.setOnClickListener(v -> selectedColor = "#4CAF50");
+        }
+        if (viewColorGrey != null) {
+            viewColorGrey.setOnClickListener(v -> selectedColor = "#828282");
+        }
+        if (viewColorOrange != null) {
+            viewColorOrange.setOnClickListener(v -> selectedColor = "#F2994A");
+        }
     }
 
     private void validateAndSave() {
@@ -56,19 +87,17 @@ public class AddEditActivity extends AppCompatActivity {
             return;
         }
 
-        // Création de la date du jour
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault());
-        String currentDate = sdf.format(new java.util.Date());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        String currentDate = sdf.format(new Date());
 
+        // Création de la note avec la couleur (soit celle cliquée dans le menu, soit changée via pastille)
         Note targetNote = new Note(title, content, selectedColor, currentDate, false);
 
-        // Exécution en arrière-plan via l'Executor pour ne pas bloquer l'interface
         NoteDatabase.databaseWriteExecutor.execute(() -> {
             NoteDatabase.getInstance(AddEditActivity.this).noteDao().insertNote(targetNote);
 
-            // Retour sur le thread principal pour afficher le Toast et fermer l'activité
             runOnUiThread(() -> {
-                android.widget.Toast.makeText(AddEditActivity.this, "Note enregistrée avec succès !", android.widget.Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddEditActivity.this, "Note enregistrée avec succès !", Toast.LENGTH_SHORT).show();
                 finish();
             });
         });
