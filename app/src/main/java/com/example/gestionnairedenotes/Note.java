@@ -40,6 +40,8 @@ public class Note {
     public String getCouleur() { return couleur; }
     public void setCouleur(String couleur) { this.couleur = couleur; }
 
+
+
     public boolean isFavori() { return isFavori; }
     public void setFavori(boolean favori) { isFavori = favori; }
 }
