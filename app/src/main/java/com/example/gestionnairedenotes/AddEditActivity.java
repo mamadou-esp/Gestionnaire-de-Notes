@@ -94,7 +94,7 @@ public class AddEditActivity extends AppCompatActivity {
         Note targetNote = new Note(title, content, selectedColor, currentDate, false);
 
         NoteDatabase.databaseWriteExecutor.execute(() -> {
-            NoteDatabase.getInstance(AddEditActivity.this).noteDao().insertNote(targetNote);
+            NoteDatabase.getInstance(AddEditActivity.this).noteDao().insert(targetNote);
 
             runOnUiThread(() -> {
                 Toast.makeText(AddEditActivity.this, "Note enregistrée avec succès !", Toast.LENGTH_SHORT).show();
