@@ -7,10 +7,13 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -57,7 +60,31 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 4. Gestion de la Palette de couleurs
+        // 4. --- IMPLEMENTATION DU BONUS : SUPPRESSION RAPIDE (SWIPE TO DELETE) ---
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false; // Pas de drag & drop de lignes de haut en bas
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                if (adapter != null) {
+                    // Récupère la note liée à la carte qui vient d'être swipée
+                    int position = viewHolder.getAdapterPosition();
+                    Note noteToDelete = adapter.getNoteAt(position);
+
+                    // Suppression asynchrone via Room
+                    noteViewModel.delete(noteToDelete);
+
+                    // Toast de confirmation
+                    Toast.makeText(MainActivity.this, "Note supprimée 🗑️", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }).attachToRecyclerView(recyclerView);
+
+
+        // 5. Gestion de la Palette de couleurs
         cardPaletteContainer = findViewById(R.id.cardPaletteContainer);
         fabAddNote = findViewById(R.id.fabAdd);
         FloatingActionButton fabClosePalette = findViewById(R.id.fabClosePalette);
@@ -86,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         setupColorClick(R.id.viewColorOrange, "#FF9800");
         setupColorClick(R.id.viewColorGray, "#9E9E9E");
 
-        // 5. Barre de recherche dynamique (Filtre textuel en temps réel)
+        // 6. Barre de recherche dynamique (Filtre textuel en temps réel)
         EditText etSearch = findViewById(R.id.etSearch);
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -103,14 +130,13 @@ public class MainActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        // 6. Gestion du Bouton de filtrage Favoris
+        // 7. Gestion du Bouton de filtrage Favoris
         TextView btnFavoris = findViewById(R.id.btnFavoris);
         btnFavoris.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (adapter == null) return;
 
-                // Inversion de la bascule
                 isFilteringFavorites = !isFilteringFavorites;
 
                 if (isFilteringFavorites) {

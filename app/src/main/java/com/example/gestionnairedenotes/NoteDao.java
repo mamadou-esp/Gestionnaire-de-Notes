@@ -2,6 +2,7 @@ package com.example.gestionnairedenotes;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
@@ -17,6 +18,10 @@ public interface NoteDao {
     // Mettre à jour une note existante
     @Update
     void update(Note note);
+
+    // Supprimer une note
+    @Delete
+    void delete(Note note);
 
     // Récupérer toutes les notes (les plus récentes en premier)
     @Query("SELECT * FROM table_notes ORDER BY id DESC")

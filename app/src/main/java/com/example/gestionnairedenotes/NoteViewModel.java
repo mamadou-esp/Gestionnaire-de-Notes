@@ -25,6 +25,10 @@ public class NoteViewModel extends AndroidViewModel {
         NoteDatabase.databaseWriteExecutor.execute(() -> noteDao.update(note));
     }
 
+    public void delete(Note note) {
+        NoteDatabase.databaseWriteExecutor.execute(() -> noteDao.delete(note));
+    }
+
     public LiveData<List<Note>> getAllNotes() {
         return allNotes;
     }

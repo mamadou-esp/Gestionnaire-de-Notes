@@ -57,6 +57,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         notifyDataSetChanged();
     }
 
+    // NOUVEAU : Permet à la MainActivity de récupérer la note glissée (Swipe-to-delete)
+    public Note getNoteAt(int position) {
+        return notesList.get(position);
+    }
+
     // Appelé par la barre de recherche (Lab 10)
     public void filter(String text) {
         this.currentSearchText = text != null ? text : "";
