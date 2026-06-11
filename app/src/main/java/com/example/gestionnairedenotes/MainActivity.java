@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        // 7. Gestion du Bouton de filtrage Favoris (Clic simple classique)
+        // 7. Gestion du Bouton de filtrage Favoris
         TextView btnFavoris = findViewById(R.id.btnFavoris);
         btnFavoris.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -145,8 +145,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 8. --- GESTION DU BOUTON DE TRI PROPRE (Respect de la maquette) ---
-        // On cherche le bouton de tri dans ton XML (remplace R.id.btnTri par l'ID exact de ton bouton si besoin)
+        // 8. --- IMPLEMENTATION DU BONUS : COMPTEUR DYNAMIQUE EN TEMPS RÉEL ---
+        adapter.setOnNotesCountChangedListener(new NoteAdapter.OnNotesCountChangedListener() {
+            @Override
+            public void onNotesCountChanged(int visibleCount, int totalCount) {
+                // On change dynamiquement le texte indicatif de la barre de recherche
+                if (visibleCount == totalCount) {
+                    etSearch.setHint("Rechercher (" + totalCount + " notes)");
+                } else {
+                    etSearch.setHint("Trouvé : " + visibleCount + " / " + totalCount);
+                }
+            }
+        });
+
+        // 9. Gestion du bouton de tri (Optionnel, au cas où tu as un bouton R.id.btnTri)
         View btnTri = findViewById(R.id.btnTri);
         if (btnTri != null) {
             btnTri.setOnClickListener(new View.OnClickListener() {
@@ -154,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     if (adapter == null) return;
 
-                    // Création d'un menu popup élégant ancré sous le bouton
                     PopupMenu popupMenu = new PopupMenu(MainActivity.this, v);
                     popupMenu.getMenu().add(0, 0, 0, "📅 Plus récentes d'abord");
                     popupMenu.getMenu().add(0, 1, 1, "🔤 Ordre alphabétique");
@@ -164,17 +175,15 @@ public class MainActivity extends AppCompatActivity {
                         public boolean onMenuItemClick(MenuItem item) {
                             if (item.getItemId() == 0) {
                                 adapter.setSortType(0);
-                                Toast.makeText(MainActivity.this, "Trié par date 📅", Toast.LENGTH_SHORT).show();
                                 return true;
                             } else if (item.getItemId() == 1) {
                                 adapter.setSortType(1);
-                                Toast.makeText(MainActivity.this, "Trié par titre 🔤", Toast.LENGTH_SHORT).show();
                                 return true;
                             }
                             return false;
                         }
                     });
-                    popupMenu.show(); // Affichage du menu
+                    popupMenu.show();
                 }
             });
         }

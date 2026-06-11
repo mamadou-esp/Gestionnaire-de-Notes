@@ -26,9 +26,18 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     // États des filtres et du tri en cours
     private String currentSearchText = "";
     private boolean currentShowOnlyFavorites = false;
-
-    // 0 = Tri par Date (récent en premier), 1 = Tri Alphabétique (Titre)
     private int currentSortType = 0;
+
+    // --- INTERFACE POUR LE COMPTEUR DE NOTES ---
+    public interface OnNotesCountChangedListener {
+        void onNotesCountChanged(int visibleCount, int totalCount);
+    }
+
+    private OnNotesCountChangedListener countListener;
+
+    public void setOnNotesCountChangedListener(OnNotesCountChangedListener listener) {
+        this.countListener = listener;
+    }
 
     // Met à jour la liste principale et réapplique les filtres et le tri
     public void setNotes(List<Note> notes) {
@@ -39,7 +48,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     // Permet de changer le type de tri depuis la MainActivity
     public void setSortType(int sortType) {
         this.currentSortType = sortType;
-        applyFilters(); // On réapplique les filtres pour mettre à jour le tri visuel
+        applyFilters();
     }
 
     /**
@@ -62,10 +71,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
             }
         }
 
-        // 2. Étape de Tri (Nouveau !)
+        // 2. Étape de Tri
         if (currentSortType == 0) {
-            // Tri par date décroissante (ID ou Date si stockée en String comparable/Timestamp)
-            // Dans l'urgence d'un examen, trier par ID inversé trie les notes de la plus récente à la plus ancienne
             Collections.sort(filteredList, new Comparator<Note>() {
                 @Override
                 public int compare(Note n1, Note n2) {
@@ -73,7 +80,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
                 }
             });
         } else if (currentSortType == 1) {
-            // Tri par Ordre Alphabétique du Titre
             Collections.sort(filteredList, new Comparator<Note>() {
                 @Override
                 public int compare(Note n1, Note n2) {
@@ -86,6 +92,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
 
         this.notesList = filteredList;
         notifyDataSetChanged();
+
+        // --- ENVOI DES CHIFFRES AU COMPTEUR ---
+        if (countListener != null) {
+            countListener.onNotesCountChanged(filteredList.size(), notesListFull.size());
+        }
     }
 
     // Permet à la MainActivity de récupérer la note glissée (Swipe-to-delete)
