@@ -131,9 +131,21 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         holder.tvDate.setText(currentNote.getDate());
 
         try {
-            holder.cardBackground.setBackgroundColor(Color.parseColor(currentNote.getCouleur()));
+            int color = Color.parseColor(currentNote.getCouleur());
+            holder.cardBackground.setBackgroundColor(color);
+
+            // Gestion dynamique du contraste (Texte noir sur jaune, blanc sur le reste)
+            if (currentNote.getCouleur().equalsIgnoreCase("#FFEB3B") || currentNote.getCouleur().equalsIgnoreCase("#F2C94C")) {
+                holder.tvTitle.setTextColor(Color.BLACK);
+                holder.tvDate.setTextColor(Color.DKGRAY);
+            } else {
+                holder.tvTitle.setTextColor(Color.WHITE);
+                holder.tvDate.setTextColor(Color.parseColor("#E0E0E0"));
+            }
         } catch (Exception e) {
             holder.cardBackground.setBackgroundColor(Color.parseColor("#828282"));
+            holder.tvTitle.setTextColor(Color.WHITE);
+            holder.tvDate.setTextColor(Color.parseColor("#E0E0E0"));
         }
 
         if (currentNote.isFavori()) {

@@ -12,14 +12,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.cardview.widget.CardView;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
 
     private CardView cardPaletteContainer;
     private FloatingActionButton fabAddNote;
+    private RecyclerView recyclerView;
+    private TextView tvEmptyNotes;
+    private EditText etSearch;
 
     private boolean isFilteringFavorites = false;
 
@@ -36,8 +38,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Initialisation du RecyclerView
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewNotes);
+        // 1. Initialisation des vues
+        recyclerView = findViewById(R.id.recyclerViewNotes);
+        tvEmptyNotes = findViewById(R.id.tvEmptyNotes);
+        etSearch = findViewById(R.id.etSearch);
+        cardPaletteContainer = findViewById(R.id.cardPaletteContainer);
+        fabAddNote = findViewById(R.id.fabAdd);
+        FloatingActionButton fabClosePalette = findViewById(R.id.fabClosePalette);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(true);
 
@@ -45,24 +53,18 @@ public class MainActivity extends AppCompatActivity {
         adapter = new NoteAdapter();
         recyclerView.setAdapter(adapter);
 
-        // 3. Liaison avec le ViewModel (Observation LiveData de Room)
-        TextView tvEmptyNotes = findViewById(R.id.tvEmptyNotes);
+        // 2.5 Listeners de l'adaptateur (Doit être avant le ViewModel pour capter le premier chargement)
+        setupAdapterListeners();
+
+        // 3. Liaison avec le ViewModel
         noteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
-        noteViewModel.getAllNotes().observe(this, new Observer<List<Note>>() {
-            @Override
-            public void onChanged(List<Note> notes) {
-                if (notes != null && !notes.isEmpty()) {
-                    adapter.setNotes(notes);
-                    recyclerView.setVisibility(View.VISIBLE);
-                    tvEmptyNotes.setVisibility(View.GONE);
-                } else {
-                    recyclerView.setVisibility(View.GONE);
-                    tvEmptyNotes.setVisibility(View.VISIBLE);
-                }
+        noteViewModel.getAllNotes().observe(this, notes -> {
+            if (notes != null) {
+                adapter.setNotes(notes);
             }
         });
 
-        // 4. Implémentation du Bonus : Suppression rapide (Swipe to delete)
+        // 4. Swipe to delete
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
@@ -71,137 +73,116 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                if (adapter != null) {
-                    int position = viewHolder.getAdapterPosition();
-                    Note noteToDelete = adapter.getNoteAt(position);
-                    noteViewModel.delete(noteToDelete);
-                    Toast.makeText(MainActivity.this, "Note supprimée 🗑️", Toast.LENGTH_SHORT).show();
-                }
+                int position = viewHolder.getAdapterPosition();
+                Note noteToDelete = adapter.getNoteAt(position);
+                noteViewModel.delete(noteToDelete);
+                Toast.makeText(MainActivity.this, "Note supprimée 🗑️", Toast.LENGTH_SHORT).show();
             }
         }).attachToRecyclerView(recyclerView);
 
-
-        // 5. Gestion de la Palette de couleurs
-        cardPaletteContainer = findViewById(R.id.cardPaletteContainer);
-        fabAddNote = findViewById(R.id.fabAdd);
-        FloatingActionButton fabClosePalette = findViewById(R.id.fabClosePalette);
-
-        fabAddNote.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cardPaletteContainer.setVisibility(View.VISIBLE);
-                fabAddNote.setVisibility(View.GONE);
-            }
+        // 5. Gestion de la Palette
+        fabAddNote.setOnClickListener(v -> {
+            cardPaletteContainer.setVisibility(View.VISIBLE);
+            fabAddNote.setVisibility(View.GONE);
         });
 
-        fabClosePalette.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cardPaletteContainer.setVisibility(View.GONE);
-                fabAddNote.setVisibility(View.VISIBLE);
-            }
+        fabClosePalette.setOnClickListener(v -> {
+            cardPaletteContainer.setVisibility(View.GONE);
+            fabAddNote.setVisibility(View.VISIBLE);
         });
 
-        setupColorClick(R.id.viewColorGreen, "#4CAF50");
-        setupColorClick(R.id.viewColorRed, "#F44336");
-        setupColorClick(R.id.viewColorBlue, "#2196F3");
-        setupColorClick(R.id.viewColorYellow, "#FFEB3B");
-        setupColorClick(R.id.viewColorOrange, "#FF9800");
-        setupColorClick(R.id.viewColorGray, "#9E9E9E");
+        setupColorClick(R.id.viewColorGreen, "#219653");
+        setupColorClick(R.id.viewColorRed, "#EB5757");
+        setupColorClick(R.id.viewColorBlue, "#2F80ED");
+        setupColorClick(R.id.viewColorYellow, "#F2C94C");
+        setupColorClick(R.id.viewColorOrange, "#F2994A");
+        setupColorClick(R.id.viewColorGray, "#828282");
 
-        // 6. Barre de recherche dynamique (Filtre textuel en temps réel)
-        EditText etSearch = findViewById(R.id.etSearch);
+        // 6. Recherche dynamique
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (adapter != null) {
-                    adapter.filter(s.toString());
-                }
+                adapter.filter(s.toString());
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });
 
-        // 7. Gestion du Bouton de filtrage Favoris
+        // 7. Filtrage Favoris
         TextView btnFavoris = findViewById(R.id.btnFavoris);
-        btnFavoris.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (adapter == null) return;
-
-                isFilteringFavorites = !isFilteringFavorites;
-
-                if (isFilteringFavorites) {
-                    adapter.filterFavorites(true);
-                    btnFavoris.setText("★ Favoris");
-                } else {
-                    adapter.filterFavorites(false);
-                    btnFavoris.setText("Favoris");
-                }
-            }
+        btnFavoris.setOnClickListener(v -> {
+            isFilteringFavorites = !isFilteringFavorites;
+            adapter.filterFavorites(isFilteringFavorites);
+            btnFavoris.setText(isFilteringFavorites ? "★ Favoris" : "Favoris");
         });
 
-        // 8. --- IMPLEMENTATION DU BONUS : COMPTEUR DYNAMIQUE EN TEMPS RÉEL ---
-        adapter.setOnNotesCountChangedListener(new NoteAdapter.OnNotesCountChangedListener() {
-            @Override
-            public void onNotesCountChanged(int visibleCount, int totalCount) {
-                // On change dynamiquement le texte indicatif de la barre de recherche
-                if (visibleCount == totalCount) {
-                    etSearch.setHint("Rechercher (" + totalCount + " notes)");
-                } else {
-                    etSearch.setHint("Trouvé : " + visibleCount + " / " + totalCount);
-                }
-            }
-        });
+        // 7.5 Dark Mode
+        TextView btnTheme = findViewById(R.id.btnTheme);
+        updateThemeIcon(btnTheme);
+        btnTheme.setOnClickListener(v -> toggleTheme());
 
-        // 9. Gestion du bouton de tri (Optionnel, au cas où tu as un bouton R.id.btnTri)
+        // 9. Tri
         View btnTri = findViewById(R.id.btnTri);
         if (btnTri != null) {
-            btnTri.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (adapter == null) return;
-
-                    PopupMenu popupMenu = new PopupMenu(MainActivity.this, v);
-                    popupMenu.getMenu().add(0, 0, 0, "📅 Plus récentes d'abord");
-                    popupMenu.getMenu().add(0, 1, 1, "🔤 Ordre alphabétique");
-
-                    popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            if (item.getItemId() == 0) {
-                                adapter.setSortType(0);
-                                return true;
-                            } else if (item.getItemId() == 1) {
-                                adapter.setSortType(1);
-                                return true;
-                            }
-                            return false;
-                        }
-                    });
-                    popupMenu.show();
-                }
-            });
+            btnTri.setOnClickListener(this::showSortPopup);
         }
     }
 
-    private void setupColorClick(int viewId, final String hexColor) {
+    private void setupAdapterListeners() {
+        adapter.setOnNotesCountChangedListener((visibleCount, totalCount) -> {
+            if (visibleCount == 0) {
+                recyclerView.setVisibility(View.GONE);
+                tvEmptyNotes.setVisibility(View.VISIBLE);
+                tvEmptyNotes.setText(totalCount > 0 ? "Aucun résultat trouvé 🔍" : "Aucune note");
+            } else {
+                recyclerView.setVisibility(View.VISIBLE);
+                tvEmptyNotes.setVisibility(View.GONE);
+            }
+
+            if (visibleCount == totalCount) {
+                etSearch.setHint("Rechercher (" + totalCount + " notes)");
+            } else {
+                etSearch.setHint("Trouvé : " + visibleCount + " / " + totalCount);
+            }
+        });
+    }
+
+    private void updateThemeIcon(TextView btnTheme) {
+        int nightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        btnTheme.setText(nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES ? "☀️" : "🌙");
+    }
+
+    private void toggleTheme() {
+        int nightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        if (nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
+    }
+
+    private void showSortPopup(View v) {
+        PopupMenu popupMenu = new PopupMenu(this, v);
+        popupMenu.getMenu().add(0, 0, 0, "📅 Plus récentes d'abord");
+        popupMenu.getMenu().add(0, 1, 1, "🔤 Ordre alphabétique");
+        popupMenu.setOnMenuItemClickListener(item -> {
+            adapter.setSortType(item.getItemId());
+            return true;
+        });
+        popupMenu.show();
+    }
+
+    private void setupColorClick(int viewId, String hexColor) {
         View colorView = findViewById(viewId);
         if (colorView != null) {
-            colorView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    cardPaletteContainer.setVisibility(View.GONE);
-                    fabAddNote.setVisibility(View.VISIBLE);
-
-                    Intent intent = new Intent(MainActivity.this, AddEditActivity.class);
-                    intent.putExtra("EXTRA_COLOR", hexColor);
-                    startActivity(intent);
-                }
+            colorView.setOnClickListener(v -> {
+                cardPaletteContainer.setVisibility(View.GONE);
+                fabAddNote.setVisibility(View.VISIBLE);
+                Intent intent = new Intent(MainActivity.this, AddEditActivity.class);
+                intent.putExtra("EXTRA_COLOR", hexColor);
+                startActivity(intent);
             });
         }
     }

@@ -85,16 +85,18 @@ public class AddEditActivity extends AppCompatActivity {
             mainContainer.setBackgroundColor(Color.parseColor(noteColor));
 
             // Gestion intelligente du contraste
-            if (noteColor.equals("#F2C94C")) { // Si jaune clair, texte en noir
+            if (noteColor.equalsIgnoreCase("#F2C94C")) { // Si jaune clair, texte en noir
                 etNoteTitle.setTextColor(Color.BLACK);
                 etNoteTitle.setHintTextColor(Color.GRAY);
                 etNoteContent.setTextColor(Color.BLACK);
                 etNoteContent.setHintTextColor(Color.GRAY);
+                btnSaveNote.setTextColor(Color.BLACK);
             } else { // Pour toutes les autres couleurs sombres, texte en blanc
                 etNoteTitle.setTextColor(Color.WHITE);
                 etNoteTitle.setHintTextColor(Color.parseColor("#CCCCCC"));
                 etNoteContent.setTextColor(Color.WHITE);
                 etNoteContent.setHintTextColor(Color.parseColor("#CCCCCC"));
+                btnSaveNote.setTextColor(Color.WHITE);
             }
         } catch (IllegalArgumentException e) {
             mainContainer.setBackgroundColor(Color.WHITE);
