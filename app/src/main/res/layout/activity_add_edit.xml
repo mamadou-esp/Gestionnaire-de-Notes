@@ -19,6 +19,17 @@
         android:inputType="text"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnShareNote" />
+
+    <ImageButton
+        android:id="@+id/btnShareNote"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_share"
+        android:contentDescription="Partager la note"
+        app:layout_constraintTop_toTopOf="@id/etNoteTitle"
+        app:layout_constraintBottom_toBottomOf="@id/etNoteTitle"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <EditText

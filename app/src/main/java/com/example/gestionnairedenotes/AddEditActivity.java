@@ -1,11 +1,13 @@
 package com.example.gestionnairedenotes;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -73,6 +75,32 @@ public class AddEditActivity extends AppCompatActivity {
         editColorGray.setOnClickListener(v -> rafraichirCouleurEcran("#828282"));
 
         btnSaveNote.setOnClickListener(v -> sauvegarderNote());
+
+        // 4. Fonctionnalité de partage
+        ImageButton btnShareNote = findViewById(R.id.btnShareNote);
+        btnShareNote.setOnClickListener(v -> partagerNote());
+    }
+
+    /**
+     * Partage le contenu de la note via un Intent implicite (ACTION_SEND).
+     */
+    private void partagerNote() {
+        String title = etNoteTitle.getText().toString().trim();
+        String content = etNoteContent.getText().toString().trim();
+
+        if (TextUtils.isEmpty(title) && TextUtils.isEmpty(content)) {
+            Toast.makeText(this, "La note est vide, rien à partager", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String shareBody = "Note : " + title + "\n\n" + content;
+        
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+        
+        startActivity(Intent.createChooser(shareIntent, "Partager la note via :"));
     }
 
     /**
