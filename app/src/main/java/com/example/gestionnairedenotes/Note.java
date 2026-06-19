@@ -3,36 +3,45 @@ package com.example.gestionnairedenotes;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "notes")
+@Entity(tableName = "table_notes")
 public class Note {
 
     @PrimaryKey(autoGenerate = true)
-    private int id;
+    private int id; // Identifiant unique généré automatiquement
 
-    private String title;
-    private String content;
-    private String color;
-    private long dateMillis;
-    private boolean favorite;
+    private String titre;
+    private String contenu;
+    private String date;
+    private String couleur; // Stockera le code hexadécimal (ex: "#219653")
+    private boolean isFavori; // true si favori, false sinon
 
-    public Note(String title, String content, String color, long dateMillis, boolean favorite) {
-        this.title = title;
-        this.content = content;
-        this.color = color;
-        this.dateMillis = dateMillis;
-        this.favorite = favorite;
+    // Constructeur utilisé lors de la création d'une nouvelle note
+    public Note(String titre, String contenu, String date, String couleur, boolean isFavori) {
+        this.titre = titre;
+        this.contenu = contenu;
+        this.date = date;
+        this.couleur = couleur;
+        this.isFavori = isFavori;
     }
 
+    // Getters et Setters (obligatoires pour que Room puisse lire/écrire les données)
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-    public String getColor() { return color; }
-    public void setColor(String color) { this.color = color; }
-    public long getDateMillis() { return dateMillis; }
-    public void setDateMillis(long dateMillis) { this.dateMillis = dateMillis; }
-    public boolean isFavorite() { return favorite; }
-    public void setFavorite(boolean favorite) { this.favorite = favorite; }
+
+    public String getTitre() { return titre; }
+    public void setTitre(String titre) { this.titre = titre; }
+
+    public String getContenu() { return contenu; }
+    public void setContenu(String contenu) { this.contenu = contenu; }
+
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
+
+    public String getCouleur() { return couleur; }
+    public void setCouleur(String couleur) { this.couleur = couleur; }
+
+
+
+    public boolean isFavori() { return isFavori; }
+    public void setFavori(boolean favori) { isFavori = favori; }
 }
