@@ -22,19 +22,17 @@ public class AddEditActivity extends AppCompatActivity {
     private Button btnSaveNote;
     private ConstraintLayout mainContainer;
 
-    // Déclaration des pastilles de modification de couleur
     private View editColorGreen, editColorRed, editColorBlue, editColorYellow, editColorOrange, editColorGray;
 
-    private String noteColor = "#FFFFFF"; // Couleur par défaut
-    private int noteId = -1;             // -1 = Mode Création
-    private boolean isFavori = false;    // Conserver l'état favori actuel
+    private String noteColor = "#FFFFFF";
+    private int noteId = -1;
+    private boolean isFavori = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_edit);
 
-        // 1. Liaison des composants graphiques
         etNoteTitle = findViewById(R.id.etNoteTitle);
         etNoteContent = findViewById(R.id.etNoteContent);
         btnSaveNote = findViewById(R.id.btnSaveNote);
@@ -47,7 +45,6 @@ public class AddEditActivity extends AppCompatActivity {
         editColorOrange = findViewById(R.id.editColorOrange);
         editColorGray = findViewById(R.id.editColorGray);
 
-        // 2. Détection du mode (Modification ou Création)
         if (getIntent().hasExtra("EXTRA_ID")) {
             noteId = getIntent().getIntExtra("EXTRA_ID", -1);
             noteColor = getIntent().getStringExtra("EXTRA_COLOR");
@@ -63,10 +60,8 @@ public class AddEditActivity extends AppCompatActivity {
             btnSaveNote.setText("Créer");
         }
 
-        // Appliquer la couleur initiale reçue
         rafraichirCouleurEcran(noteColor);
 
-        // 3. Écouteurs de clics pour CHANGER la couleur de la note (Exigence Page 11)
         editColorGreen.setOnClickListener(v -> rafraichirCouleurEcran("#219653"));
         editColorRed.setOnClickListener(v -> rafraichirCouleurEcran("#EB5757"));
         editColorBlue.setOnClickListener(v -> rafraichirCouleurEcran("#2F80ED"));
@@ -76,14 +71,10 @@ public class AddEditActivity extends AppCompatActivity {
 
         btnSaveNote.setOnClickListener(v -> sauvegarderNote());
 
-        // 4. Fonctionnalité de partage
         ImageButton btnShareNote = findViewById(R.id.btnShareNote);
         btnShareNote.setOnClickListener(v -> partagerNote());
     }
 
-    /**
-     * Partage le contenu de la note via un Intent implicite (ACTION_SEND).
-     */
     private void partagerNote() {
         String title = etNoteTitle.getText().toString().trim();
         String content = etNoteContent.getText().toString().trim();
@@ -94,37 +85,30 @@ public class AddEditActivity extends AppCompatActivity {
         }
 
         String shareBody = "Note : " + title + "\n\n" + content;
-        
+
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
         shareIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
-        
+
         startActivity(Intent.createChooser(shareIntent, "Partager la note via :"));
     }
 
-    /**
-     * Change dynamiquement la couleur de fond et adapte le contraste des textes.
-     * Centralise la logique pour éviter la duplication de code (Qualité de code 15%).
-     */
     private void rafraichirCouleurEcran(String hexColor) {
         this.noteColor = hexColor;
         try {
             mainContainer.setBackgroundColor(Color.parseColor(noteColor));
 
-            // Gestion intelligente du contraste
-            if (noteColor.equalsIgnoreCase("#F2C94C")) { // Si jaune clair, texte en noir
+            if (noteColor.equalsIgnoreCase("#F2C94C")) {
                 etNoteTitle.setTextColor(Color.BLACK);
                 etNoteTitle.setHintTextColor(Color.GRAY);
                 etNoteContent.setTextColor(Color.BLACK);
                 etNoteContent.setHintTextColor(Color.GRAY);
-                btnSaveNote.setTextColor(Color.BLACK);
-            } else { // Pour toutes les autres couleurs sombres, texte en blanc
+            } else {
                 etNoteTitle.setTextColor(Color.WHITE);
                 etNoteTitle.setHintTextColor(Color.parseColor("#CCCCCC"));
                 etNoteContent.setTextColor(Color.WHITE);
                 etNoteContent.setHintTextColor(Color.parseColor("#CCCCCC"));
-                btnSaveNote.setTextColor(Color.WHITE);
             }
         } catch (IllegalArgumentException e) {
             mainContainer.setBackgroundColor(Color.WHITE);
@@ -155,7 +139,6 @@ public class AddEditActivity extends AppCompatActivity {
                     Note nouvelleNote = new Note(title, content, currentDate, noteColor, false);
                     db.noteDao().insert(nouvelleNote);
                 } else {
-                    // Sauvegarde avec la NOUVELLE couleur sélectionnée !
                     Note noteModifiee = new Note(title, content, currentDate, noteColor, isFavori);
                     noteModifiee.setId(noteId);
                     db.noteDao().update(noteModifiee);
