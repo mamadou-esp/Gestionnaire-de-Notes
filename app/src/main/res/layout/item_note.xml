@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:text="Note 1"
         android:textColor="#FFFFFF"
-        android:textSize="18sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginEnd="10dp"
         app:layout_constraintTop_toTopOf="parent"
