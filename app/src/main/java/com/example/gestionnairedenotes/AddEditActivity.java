@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -79,6 +80,13 @@ public class AddEditActivity extends AppCompatActivity {
         // 4. Fonctionnalité de partage
         ImageButton btnShareNote = findViewById(R.id.btnShareNote);
         btnShareNote.setOnClickListener(v -> partagerNote());
+
+        // 5. Amélioration UX : Focus automatique sur le titre et affichage du clavier
+        etNoteTitle.requestFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(etNoteTitle, InputMethodManager.SHOW_IMPLICIT);
+        }
     }
 
     /**

@@ -16,7 +16,7 @@
         android:textStyle="bold"
         android:background="@null"
         android:importantForAutofill="no"
-        android:inputType="text"
+        android:inputType="textCapSentences"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnShareNote" />
@@ -43,7 +43,7 @@
         android:background="@null"
         android:gravity="top"
         android:importantForAutofill="no"
-        android:inputType="textMultiLine"
+        android:inputType="textMultiLine|textCapSentences"
         app:layout_constraintTop_toBottomOf="@id/etNoteTitle"
         app:layout_constraintBottom_toTopOf="@+id/layoutColorSelector"
         app:layout_constraintStart_toStartOf="parent"
